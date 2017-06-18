@@ -50,11 +50,11 @@ if %year% lss 1000 set year=0%year%
 
 :: Copy the file
 if %erase% == 0 (
-	copy "%2" "%target%_%year%.ck2"
+	copy %2 "%target%_%year%.ck2"
 	echo %date% %time% : %target%_%year%.ck2 archived >> "%~dp0%log.txt"
 ) else (
 	if not exist "%target%_%year%.ck2" (
-		copy "%2" "%target%_%year%.ck2"
+		copy %2 "%target%_%year%.ck2"
 		echo %date% %time% : %target%_%year%.ck2 archived >> "%~dp0%log.txt"
 	)
 )
