@@ -20,7 +20,6 @@ set erase=0
 
 :: Interest file
 set interestFile=autosave.ck2
-::set interestFile=a.png
 
 :: We are only intested by creation or updating
 if %1 == "DELETE" ( exit )
@@ -31,10 +30,7 @@ if NOT "%name%" == "%interestFile%" ( exit )
 echo %date% %time% : %1 %2 >> "%~dp0%log.txt"
 
 :: Get the in-game date
-set filename=%2
-set filename=%filename:"=%
-echo %date% %time% : %filename% >> "%~dp0%log.txt"
-for /F "skip=2 delims=" %%i in (%filename%) do set "gamedate=%%i"&goto nextline
+for /F "usebackq skip=2 delims=" %%i in (%2) do set "gamedate=%%i"&goto nextline
 :nextline
 echo %date% %time% : in-game date = %gamedate% >> "%~dp0%log.txt"
 
