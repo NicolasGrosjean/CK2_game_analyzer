@@ -15,16 +15,54 @@ saveDir = "../save_archiver/saves/"
 targetDir = "./results/"
 
 #%%
+provinceKey = "provinces="
+variableKey = "variables="
+
+#%%
 def unspaced(string):
     return string.replace(' ', '').replace('\t', '').replace('\n', '')
 
 #%%
-
 # TODO : Parse flag and modifiers
-def parseProvinceVariable(lines):
+def parseProvinceVariable(it, line, init, n):
+    """
+    Parse the the provinces of a CK2 save game
+    
+    :param it: iterator of the lines when we are at the province key
+    :param line: current line
+    :param init: current line number
+    :param n: number of lines in the file
+    :return: list of provinces variables
+    :rtype: dictionnary
+    """
     res = list()
-    provinceKey = "provinces="
-    variableKey = "variables="
+    i = init
+    while ((not '{' in line) & (i < n)):
+        line = next(it)
+
+    deep = 2 # deep 0 = root, 1 = provinces
+    isVariable = False
+    while (deep > 1) & (i < n):
+        i += 1
+        line = unspaced(next(it))
+        if '{' in line:
+            deep += 1
+        if '}' in line:
+            deep -= 1
+            isVariable = False
+        tokens = line.split('=')
+        if len(tokens) == 2:
+            if deep == 2 :
+                province = tokens[0]
+            if isVariable:
+                res.append({"province":province, "variable":tokens[0],
+                            "value":tokens[1]})
+            if (deep == 3) & (variableKey in line):
+                isVariable = True
+
+#%%
+
+def parse(lines):
     provincesFound = False
     n = len(lines)
     i = 0
@@ -34,28 +72,7 @@ def parseProvinceVariable(lines):
         line = next(it)
         if provinceKey in line:
             provincesFound = True
-            while ((not '{' in line) & (i < n)):
-                line = next(it)
-    
-            deep = 2 # deep 0 = root, 1 = provinces
-            isVariable = False
-            while (deep > 1) & (i < n):
-                i += 1
-                line = unspaced(next(it))
-                if '{' in line:
-                    deep += 1
-                if '}' in line:
-                    deep -= 1
-                    isVariable = False
-                tokens = line.split('=')
-                if len(tokens) == 2:
-                    if deep == 2 :
-                        province = tokens[0]
-                    if isVariable:
-                        res.append({"province":province, "variable":tokens[0],
-                                    "value":tokens[1]})
-                    if (deep == 3) & (variableKey in line):
-                        isVariable = True
+            parseProvinceVariable()
     return res
 
 #%%
