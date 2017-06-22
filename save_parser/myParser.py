@@ -24,21 +24,18 @@ def unspaced(string):
 
 #%%
 # TODO : Parse flag and modifiers
-def parseProvinceVariable(it, line, init, n):
+def parseProvinceVariable(it, init, n):
     """
     Parse the the provinces of a CK2 save game
     
     :param it: iterator of the lines when we are at the province key
-    :param line: current line
     :param init: current line number
     :param n: number of lines in the file
     :return: list of provinces variables
     :rtype: dictionnary
     """
     res = list()
-    i = init
-    while ((not '{' in line) & (i < n)):
-        line = next(it)
+    i = init    
 
     deep = 2 # deep 0 = root, 1 = provinces
     isVariable = False
@@ -59,21 +56,29 @@ def parseProvinceVariable(it, line, init, n):
                             "value":tokens[1]})
             if (deep == 3) & (variableKey in line):
                 isVariable = True
+    return res
 
 #%%
 
 def parse(lines):
-    provincesFound = False
+    """
+    Parse the lines of a CK2 savegame file
+    
+    :return: (provVar)
+    """
+    endParsing = False
     n = len(lines)
     i = 0
     it = iter(lines)
-    while (not provincesFound) & (i < n):
+    while (not endParsing) & (i < n):
         i += 1
         line = next(it)
         if provinceKey in line:
-            provincesFound = True
-            parseProvinceVariable()
-    return res
+            endParsing = True
+            while ((not '{' in line) & (i < n)):
+                line = next(it)
+            provVar = parseProvinceVariable(it, i, n)
+    return (provVar)
 
 #%%
 
@@ -101,8 +106,8 @@ for fileName in filesToParse:
     readFile = io.open(saveDir + fileName, 'rt', 1, 'latin_1')
     lines = readFile.readlines()
     readFile.close()
-    variables = parseProvinceVariable(lines)
-    dfYear = pd.DataFrame(variables)
+    (provVar) = parse(lines)
+    dfYear = pd.DataFrame(provVar)
     dfYear["year"] = year
     if first:
         df = dfYear
