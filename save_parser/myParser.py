@@ -9,11 +9,18 @@ import os
 import io
 import pandas as pd
 
+#%%  
+
+saveDir = "../save_archiver/saves/"
+targetDir = "./results/"
+
 #%%
 def unspaced(string):
     return string.replace(' ', '').replace('\t', '').replace('\n', '')
 
-#%%   
+#%%
+
+# TODO : Parse flag and modifiers
 def parseProvinceVariable(lines):
     res = list()
     provinceKey = "provinces="
@@ -60,11 +67,6 @@ def getYearFromFileName(fileName):
         parts = name.split('_')
         return parts[len(parts) - 1]
     return None
-    
-#%%  
-
-saveDir = "C:/Users/Nicolas/Documents/GitHub/CK2_game_analyzer/save_archiver/saves/"
-targetDir = "C:/Users/Nicolas/Documents/GitHub/CK2_game_analyzer/save_parser/results/"
 
 #%%
 
@@ -95,5 +97,6 @@ for fileName in filesToParse:
 #%%
 
 # TODO : add the save name to the file
+# TODO : update the file instead of create one
 df.to_csv(targetDir + "ProvinceVariables.csv", index=False)
 
