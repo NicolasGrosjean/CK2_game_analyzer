@@ -16,8 +16,13 @@ dataDir = "../save_parser/results/"
 imageDir = "./images/"
 
 #%%
-resolutionWidth = 14.4
-resolutionHeight = 9
+
+# Image resolution
+width = 16
+height = 9
+
+# Multiplication of previous ones by dpi to have pixel resolution
+dpi = 100 
 
 #%%
 
@@ -47,9 +52,8 @@ devStats = pd.concat([mini, quantiles, maxi], axis=0)
 
 #%%
 
-fig, ax = plt.subplots(nrows=1, ncols=1)
+fig, ax = plt.subplots(nrows=1, ncols=1, figsize=(width, height), dpi=dpi)
 ax.set_title(u"Development evolution ({0} - {1})".format(devStats.columns[0],
              devStats.columns[devStats.shape[1] - 1]))
-fig.set_size_inches(resolutionWidth, resolutionHeight)
 devStats.transpose().plot(ax=ax)
-plt.savefig(imageDir + "Developpement.png")
+plt.savefig(imageDir + "Developpement.png", dpi=dpi)
