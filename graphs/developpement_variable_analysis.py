@@ -34,7 +34,21 @@ dev = dfTitleVar[dfTitleVar["variable"] == "developpement"]
 
 #%%
 print("Number of titles by year")
-dev.groupby("year").count().title
+print(dev.groupby("year").count().title)
+
+#%%
+minYear = min(dev["year"])
+maxYear = max(dev["year"])
+
+print("Top 10 of more develelopped holdings in {0}".format(minYear))
+top = dev.loc[dev["year"]==minYear, ["title", "value"]].sort_values("value", ascending=False).head(10)
+top.index = range(1,11)
+print(top)
+print("")
+print("Top 10 of 10 more develelopped holdings in {0}".format(maxYear))
+top = dev.loc[dev["year"]==maxYear, ["title", "value"]].sort_values("value", ascending=False).head(10)
+top.index = range(1,11)
+print(top)
 
 #%%
 
@@ -53,7 +67,7 @@ devStats = pd.concat([mini, quantiles, maxi], axis=0)
 #%%
 
 fig, ax = plt.subplots(nrows=1, ncols=1, figsize=(width, height), dpi=dpi)
-ax.set_title(u"Development evolution ({0} - {1})".format(devStats.columns[0],
+ax.set_title(u"Development evolution ({0} - {1})".format(minYear,
              devStats.columns[devStats.shape[1] - 1]))
 devStats.transpose().plot(ax=ax)
 plt.savefig(imageDir + "Developpement.png", dpi=dpi)
