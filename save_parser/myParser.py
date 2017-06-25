@@ -18,25 +18,27 @@ targetDir = "./results/"
 provinceKey = "provinces="
 variableKey = "variables="
 titleKey = "title="
+modifierToken = "modifier"
 
 #%%
 def unspaced(string):
-    return string.replace(' ', '').replace('\t', '').replace('\n', '')
+    return string.replace(' ', '').replace('\t', '').replace('\n', '').replace('\"', '')
 
 #%%
-# TODO : Parse flag and modifiers
+# TODO : Parse flags
 def parseScopeVariable(it, init, n, scopeType):
     """
-    Parse the the provinces of a CK2 save game
+    Parse the scopes of a CK2 save game
     
     :param it: iterator of the lines when we are at the province key
     :param init: current line number
     :param n: number of lines in the file
     :param scopeType: name of the scope type
     :return: list of scope variables, modified it and init
-    :rtype: (dictionnary, iterator, int)
+    :rtype: (variable dictionnary, modifier dictionnary, iterator, int)
     """
-    res = list()
+    var = list()
+    mod = list()
     i = init    
 
     deep = 2 # deep 0 = root, 1 = provinces
@@ -54,11 +56,13 @@ def parseScopeVariable(it, init, n, scopeType):
             if deep == 2 :
                 scope = tokens[0]
             if isVariable:
-                res.append({scopeType:scope, "variable":tokens[0],
+                var.append({scopeType:scope, "variable":tokens[0],
                             "value":tokens[1]})
             if (deep == 3) & (variableKey in line):
                 isVariable = True
-    return (res, it, i)
+            if (tokens[0] == modifierToken) & (tokens[1] != ''):
+                mod.append({scopeType:scope, "modifier":tokens[1]})
+    return (var, mod, it, i)
 
 #%%
 
@@ -66,7 +70,7 @@ def parse(lines):
     """
     Parse the lines of a CK2 savegame file
     
-    :return: (provVar, titleVar)
+    :return: (provVar, provMod, titleVar)
     """
     provinceFound = False
     titleFound = False
@@ -81,14 +85,14 @@ def parse(lines):
             while ((not '{' in line) & (i < n)):
                 i += 1
                 line = next(it)
-            (provVar, it, i) = parseScopeVariable(it, i, n, "province")
+            (provVar, provMod, it, i) = parseScopeVariable(it, i, n, "province")
         if provinceFound & (titleKey in line):
             titleFound = True
             while ((not '{' in line) & (i < n)):
                 i += 1
                 line = next(it)
-            (titleVar, it, i) = parseScopeVariable(it, i, n, "title")
-    return (provVar, titleVar)
+            (titleVar, titleMod, it, i) = parseScopeVariable(it, i, n, "title")
+    return (provVar, provMod, titleVar)
 
 #%%
 
@@ -126,6 +130,7 @@ print("{} files to parse".format(len(filesToParse)))
 #%%
 
 dfProvVar = pd.DataFrame()
+dfProvMod = pd.DataFrame()
 dfTitleVar = pd.DataFrame()
 for fileName in filesToParse:
     # Get the year
@@ -139,18 +144,25 @@ for fileName in filesToParse:
     readFile.close()
     
     # Parse
-    (provVar, titleVar) = parse(lines)
+    (provVar, provMod, titleVar) = parse(lines)
     
     # Data consolidation
     dfProvVar = createOrConcatDataFrame(provVar, dfProvVar)
+    dfProvMod = createOrConcatDataFrame(provMod, dfProvMod)
     dfTitleVar = createOrConcatDataFrame(titleVar, dfTitleVar)
-    
+  
     print("Year {} treated!".format(year))
+    
+#%%
+    
+# Column ordering
+dfProvMod = dfProvMod[["province", "modifier", "year"]]
         
 #%%
 
 # TODO : add the save name to the file
 # TODO : update the fileq instead of create them
 dfProvVar.to_csv(targetDir + "ProvinceVariables.csv", index=False)
+dfProvMod.to_csv(targetDir + "ProvinceModifiers.csv", index=False)
 dfTitleVar.to_csv(targetDir + "TitleVariables.csv", index=False)
 
