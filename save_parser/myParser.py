@@ -20,13 +20,16 @@ variableKey = "variables="
 titleKey = "title="
 modifierToken = "modifier"
 
+provinceScope = "province"
+titleScope = "title"
+
 #%%
 def unspaced(string):
     return string.replace(' ', '').replace('\t', '').replace('\n', '').replace('\"', '')
 
 #%%
 # TODO : Parse flags
-def parseScopeVariable(it, init, n, scopeType):
+def parseScope(it, init, n, scopeType):
     """
     Parse the scopes of a CK2 save game
     
@@ -35,14 +38,18 @@ def parseScopeVariable(it, init, n, scopeType):
     :param n: number of lines in the file
     :param scopeType: name of the scope type
     :return: list of scope variables, modified it and init
-    :rtype: (variable dictionnary, modifier dictionnary, iterator, int)
+    :rtype: (variable dictionnary, modifier dictionnary, iterator, int,
+             title type dictionnary)
     """
     var = list()
     mod = list()
-    i = init    
+    titTyp = list()
+    i = init
+    isProvince = (scopeType == provinceScope)
 
     deep = 2 # deep 0 = root, 1 = provinces
     isVariable = False
+    isTitle = False
     while (deep > 1) & (i < n):
         i += 1
         line = unspaced(next(it))
@@ -51,6 +58,7 @@ def parseScopeVariable(it, init, n, scopeType):
         if '}' in line:
             deep -= 1
             isVariable = False
+            isTitle = False
         tokens = line.split('=')
         if len(tokens) == 2:
             if deep == 2 :
@@ -62,7 +70,13 @@ def parseScopeVariable(it, init, n, scopeType):
                 isVariable = True
             if (tokens[0] == modifierToken) & (tokens[1] != ''):
                 mod.append({scopeType:scope, "modifier":tokens[1]})
-    return (var, mod, it, i)
+            if isProvince & (deep == 3) & (tokens[0].startswith("b_")) :
+                title = tokens[0]
+                isTitle = True
+            if isTitle & (tokens[0] == "type"):
+                titTyp.append({provinceScope:scope, titleScope:title,
+                               "type": tokens[1]})
+    return (var, mod, it, i, titTyp)
 
 #%%
 
@@ -85,14 +99,14 @@ def parse(lines):
             while ((not '{' in line) & (i < n)):
                 i += 1
                 line = next(it)
-            (provVar, provMod, it, i) = parseScopeVariable(it, i, n, "province")
+            (provVar, provMod, it, i, titTyp) = parseScope(it, i, n, provinceScope)
         if provinceFound & (titleKey in line):
             titleFound = True
             while ((not '{' in line) & (i < n)):
                 i += 1
                 line = next(it)
-            (titleVar, titleMod, it, i) = parseScopeVariable(it, i, n, "title")
-    return (provVar, provMod, titleVar)
+            (titleVar, titleMod, it, i, empty) = parseScope(it, i, n, titleScope)
+    return (provVar, provMod, titleVar, titTyp)
 
 #%%
 
@@ -144,12 +158,17 @@ for fileName in filesToParse:
     readFile.close()
     
     # Parse
-    (provVar, provMod, titleVar) = parse(lines)
+    (provVar, provMod, titleVar, titleTyp) = parse(lines)
     
     # Data consolidation
     dfProvVar = createOrConcatDataFrame(provVar, dfProvVar)
     dfProvMod = createOrConcatDataFrame(provMod, dfProvMod)
     dfTitleVar = createOrConcatDataFrame(titleVar, dfTitleVar)
+    
+    # We only need the last values because it does not change
+    # In fact some tribal titles can become castle, city or temple
+    # We can do better by indicating the changing year
+    dfTitleTyp = pd.DataFrame(titleTyp)
   
     print("Year {} treated!".format(year))
     
@@ -165,4 +184,5 @@ dfProvMod = dfProvMod[["province", "modifier", "year"]]
 dfProvVar.to_csv(targetDir + "ProvinceVariables.csv", index=False)
 dfProvMod.to_csv(targetDir + "ProvinceModifiers.csv", index=False)
 dfTitleVar.to_csv(targetDir + "TitleVariables.csv", index=False)
+dfTitleTyp.to_csv(targetDir + "TitleTypes.csv", index=False)
 
