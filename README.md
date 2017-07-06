@@ -8,9 +8,11 @@ It can be useful for example to study some features of your mod.
 The output of some tools will be the input of other tools but you can explore the data by yourself.
 
 The current way is
-1. [DONE] Archive the savegames when playing
+1. Archive the savegames when playing
 2. Extract data from savegames
 3. Visualize some of these data
+
+![alt text](Schema.png)
 
 The developpement is iterative and based on existing tools.
 
