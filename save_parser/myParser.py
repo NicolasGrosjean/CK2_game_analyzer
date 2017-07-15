@@ -18,12 +18,13 @@ targetDir = "./results/"
 #%%
 
 extractedCharStats = list({"b_d", "d_d", "prs", "piety", "wealth", "emp",
-                           "host", "emi", "eyi", "rel", "cul", "bn"})
+                           "host", "emi", "eyi", "rel", "cul", "bn", "fat", "mot"})
 charStatLib = {"b_d" : "Birth date", "d_d" : "Death date", "prs" :"Prestige",
                "piety": "Piety", "wealth" : "Wealth", "emp" : "Employer",
                "host" : "Host", "emi" : "Estimated month income",
                "eyi" : "Estimated year income", "rel" : "Religion",
-               "cul" : "Culture", "bn" : "Birth Name"}
+               "cul" : "Culture", "bn" : "Birth Name", "fat" : "Father",
+               "mot": "Mother"}
 
 #%%
 provinceKey = "provinces="
