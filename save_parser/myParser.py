@@ -42,6 +42,17 @@ def unspaced(string):
     return string.replace(' ', '').replace('\t', '').replace('\n', '').replace('\"', '')
 
 #%%
+
+def goodScopeModifier(deep, scopeType):
+    if scopeType == provinceScope:
+        return (deep == 4)
+    if scopeType == titleScope:
+        return (deep == 5)
+    if scopeType == charScope:
+        return (deep == 4)
+            
+
+#%%
 # TODO : Parse flags
 def parseScope(it, init, n, scopeType):
     """
@@ -96,7 +107,7 @@ def parseScope(it, init, n, scopeType):
                 isVariable = True
               
             # Modifiers parsing
-            if (tokens[0] == modifierToken) & (tokens[1] != ''):
+            if (tokens[0] == modifierToken) & (tokens[1] != '') & goodScopeModifier(deep, scopeType) :
                 mod.append({scopeType:scope, "modifier":tokens[1]})
             
             # Title parsing
