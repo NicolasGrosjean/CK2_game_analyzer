@@ -45,10 +45,14 @@ top = dev.loc[dev["year"]==minYear, ["title", "value"]].sort_values("value", asc
 top.index = range(1,11)
 print(top)
 print("")
-print("Top 10 of 10 more develelopped holdings in {0}".format(maxYear))
+print("Top 10 of more develelopped holdings in {0}".format(maxYear))
 top = dev.loc[dev["year"]==maxYear, ["title", "value"]].sort_values("value", ascending=False).head(10)
 top.index = range(1,11)
 print(top)
+
+#%%
+print("Evolution of the negative development")
+print(dev[dev["value"] < 0].sort_values("year"))
 
 #%%
 
