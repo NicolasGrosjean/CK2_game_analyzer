@@ -70,6 +70,6 @@ ax.set_title(u"Cathedral evolution (Opus Francigenum {0})".format(ofYear),
              fontsize=20)
 cathedralByYear.transpose().plot(ax=ax, fontsize=20, lw=2)
 for i in range(len(steps)):
-    ax.axhline(steps[i], color="black")
+    ax.axhline(steps[i], color="black", linestyle='--')
 plt.legend(loc=2, fontsize = 'x-large')
 plt.savefig(imageDir + "Cathedral.png", dpi=dpi)
