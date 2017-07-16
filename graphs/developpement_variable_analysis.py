@@ -72,6 +72,7 @@ devStats = pd.concat([mini, quantiles, maxi], axis=0)
 
 fig, ax = plt.subplots(nrows=1, ncols=1, figsize=(width, height), dpi=dpi)
 ax.set_title(u"Development evolution ({0} - {1})".format(minYear,
-             devStats.columns[devStats.shape[1] - 1]))
-devStats.transpose().plot(ax=ax)
+             devStats.columns[devStats.shape[1] - 1]), fontsize=20)
+devStats.transpose().plot(ax=ax, fontsize=20, lw=2)
+plt.legend(loc=2, fontsize = 'x-large')
 plt.savefig(imageDir + "Developpement.png", dpi=dpi)
