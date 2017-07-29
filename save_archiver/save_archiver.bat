@@ -29,6 +29,9 @@ for %%A in (%2) do (set name=%%~nxA)
 if NOT "%name%" == "%interestFile%" ( exit )
 echo %date% %time% : %1 %2 >> "%~dp0%log.txt"
 
+:: Wait 10 seconds
+timeout /t 10
+
 :: Get the in-game date
 for /F "usebackq skip=2 delims=" %%i in (%2) do set "gamedate=%%i"&goto nextline
 :nextline
