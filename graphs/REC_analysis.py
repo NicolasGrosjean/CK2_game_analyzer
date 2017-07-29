@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-Created on Sun Jul 16 14:47:30 2017
+Created on July 2017
 
 @author: Nicolas
 """
@@ -14,6 +14,10 @@ matplotlib.style.use('ggplot')
 
 dataDir = "../save_parser/results/"
 imageDir = "./images/"
+
+#%%
+
+savePrefix = "save_test"
 
 #%%
 
@@ -41,7 +45,7 @@ ofYear = 1097
 
 #%%
 
-dfTitleVar = pd.read_csv(dataDir + "TitleVariables.csv")
+dfTitleVar = pd.read_csv(dataDir + savePrefix + "_TitleVariables.csv")
 
 #%%
 

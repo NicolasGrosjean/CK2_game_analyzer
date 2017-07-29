@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-Created on Sat Jun 24 11:20:58 2017
+Created on June 2017
 
 @author: Nicolas
 """
@@ -13,7 +13,11 @@ matplotlib.style.use('ggplot')
 #%%
 
 dataDir = "../save_parser/results/"
-imageDir = "./images/"
+imageDir = "../graphs/images/"
+
+#%%
+
+savePrefix = "save_test"
 
 #%%
 
@@ -26,13 +30,14 @@ dpi = 100
 
 #%%
 
+# Steps for population buildings
 castleSteps = [100, 150, 200, 250, 350]
 citySteps   = [100, 150, 250, 400, 500]
 templeSteps = [100, 170, 220, 260, 300]
 
 #%%
 
-dfTitleVar = pd.read_csv(dataDir + "TitleVariables.csv")
+dfTitleVar = pd.read_csv(dataDir + savePrefix + "_TitleVariables.csv")
 
 #%%
 
@@ -78,6 +83,9 @@ def createStatDataFrame(df):
     return devStats
 
 #%%
+
+##################### GLOBAL DEVELOPMENT STATS ################################
+
 devStats = createStatDataFrame(dev)
 
 #%%
@@ -90,6 +98,8 @@ plt.legend(loc=2, fontsize = 'x-large')
 plt.savefig(imageDir + "Developpement.png", dpi=dpi)
 
 #%%
+
+################# DEVELOPMENT STATS BY HOLDING TYPE############################
 
 dfTitleTyp = pd.read_csv(dataDir + "TitleTypes.csv")
 

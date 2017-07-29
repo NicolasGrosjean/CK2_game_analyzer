@@ -12,8 +12,11 @@ import pandas as pd
 #%%  
 
 saveDir = "../save_archiver/saves/"
-targetDir = "./results/"
+targetDir = "../save_parser/results/"
 
+#%%
+
+savePrefix = "save_test"
 
 #%%
 
@@ -194,8 +197,10 @@ def createOrConcatDataFrame(dictionnary, df, year):
 
 #%%
 
-# TODO : Filter on the save name
-filesToParse = os.listdir(saveDir)
+filesToParse = []
+for fileName in os.listdir(saveDir):
+    if fileName.startswith(savePrefix):
+        filesToParse.append(fileName)
 print("{} files to parse".format(len(filesToParse)))
 
 #%%
@@ -241,9 +246,10 @@ dfProvMod = dfProvMod[["province", "modifier", "year"]]
 
 # TODO : add the save name to the file
 # TODO : update the fileq instead of create them
-dfProvVar.to_csv(targetDir + "ProvinceVariables.csv", index=False)
-dfProvMod.to_csv(targetDir + "ProvinceModifiers.csv", index=False)
-dfTitleVar.to_csv(targetDir + "TitleVariables.csv", index=False)
-dfTitleTyp.to_csv(targetDir + "TitleTypes.csv", index=False)
-dfCharStats.to_csv(targetDir + "CharacterStats.csv", index=False, encoding='utf-8')
+dfProvVar.to_csv(targetDir + savePrefix + "_ProvinceVariables.csv", index=False)
+dfProvMod.to_csv(targetDir + savePrefix + "_ProvinceModifiers.csv", index=False)
+dfTitleVar.to_csv(targetDir + savePrefix + "_TitleVariables.csv", index=False)
+dfTitleTyp.to_csv(targetDir + savePrefix + "_TitleTypes.csv", index=False)
+dfCharStats.to_csv(targetDir + savePrefix + "_CharacterStats.csv", index=False,
+                   encoding='utf-8')
 
