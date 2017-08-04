@@ -17,7 +17,7 @@ imageDir = "../graphs/images/"
 
 #%%
 
-savePrefix = "save_test"
+savePrefix = "save_test_"
 
 #%%
 
@@ -37,7 +37,7 @@ templeSteps = [100, 170, 220, 260, 300]
 
 #%%
 
-dfTitleVar = pd.read_csv(dataDir + savePrefix + "_TitleVariables.csv")
+dfTitleVar = pd.read_csv(dataDir + savePrefix + "TitleVariables.csv")
 
 #%%
 
@@ -95,7 +95,7 @@ ax.set_title(u"Development evolution ({0} - {1})".format(minYear,
              devStats.columns[devStats.shape[1] - 1]), fontsize=20)
 devStats.transpose().plot(ax=ax, fontsize=20, lw=2)
 plt.legend(loc=2, fontsize = 'x-large')
-plt.savefig(imageDir + "Developpement.png", dpi=dpi)
+plt.savefig(imageDir + savePrefix + "Developpement.png", dpi=dpi)
 
 #%%
 
@@ -124,7 +124,7 @@ dfCastleStats.transpose().plot(ax=ax, fontsize=20, lw=2)
 for i in range(len(castleSteps)):
     ax.axhline(castleSteps[i], color="black", linestyle='--')
 plt.legend(loc=2, fontsize = 'x-large')
-plt.savefig(imageDir + "Castle_developpement.png", dpi=dpi)
+plt.savefig(imageDir + savePrefix + "Castle_developpement.png", dpi=dpi)
 
 #%%
 
@@ -135,7 +135,7 @@ dfCityStats.transpose().plot(ax=ax, fontsize=20, lw=2)
 for i in range(len(citySteps)):
     ax.axhline(citySteps[i], color="black", linestyle='--')
 plt.legend(loc=2, fontsize = 'x-large')
-plt.savefig(imageDir + "City_developpement.png", dpi=dpi)
+plt.savefig(imageDir + savePrefix + "City_developpement.png", dpi=dpi)
 
 #%%
 
@@ -146,4 +146,4 @@ dfTempleStats.transpose().plot(ax=ax, fontsize=20, lw=2)
 for i in range(len(templeSteps)):
     ax.axhline(templeSteps[i], color="black", linestyle='--')
 plt.legend(loc=2, fontsize = 'x-large')
-plt.savefig(imageDir + "Temple_developpement.png", dpi=dpi)
+plt.savefig(imageDir + savePrefix + "Temple_developpement.png", dpi=dpi)

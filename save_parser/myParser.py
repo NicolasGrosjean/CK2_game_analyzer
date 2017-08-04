@@ -4,7 +4,7 @@ Created on June 2017
 
 @author: Nicolas
 """
-
+#(provVar, provMod, provFlag, titleVar, titleFlag, titleTyp, charStats, charFlag, artFlag, artStats) = parse(lines)
 import os
 import io
 import pandas as pd
@@ -16,7 +16,7 @@ targetDir = "../save_parser/results/"
 
 #%%
 
-savePrefix = "save_test"
+savePrefix = "save_test_"
 
 #%%
 
@@ -28,17 +28,25 @@ charStatLib = {"b_d" : "Birth date", "d_d" : "Death date", "prs" :"Prestige",
                "eyi" : "Estimated year income", "rel" : "Religion",
                "cul" : "Culture", "bn" : "Birth Name", "fat" : "Father",
                "mot": "Mother"}
+               
+extractedArtStats = list({"type", "owner", "org_owner", "obtained", "equipped",
+                          "active"})
+artColumnOrder = ["type", "owner", "org_owner", "obtained", "equipped", "active"]
 
 #%%
 provinceKey = "provinces="
 variableKey = "variables="
 titleKey = "title="
 characterKey = "character="
+artifactKey = "artifacts="
+
 modifierToken = "modifier"
+flagToken = "flags"
 
 provinceScope = "province"
 titleScope = "title"
 charScope = "character"
+artScope = "artifact"
 
 #%%
 def unspaced(string):
@@ -53,10 +61,12 @@ def goodScopeModifier(deep, scopeType):
         return (deep == 5)
     if scopeType == charScope:
         return (deep == 4)
+    # No modifier in other scopes, so it is false
+    return False;
             
 
 #%%
-# TODO : Parse flags
+
 def parseScope(it, init, n, scopeType):
     """
     Parse the scopes of a CK2 save game
@@ -67,20 +77,26 @@ def parseScope(it, init, n, scopeType):
     :param scopeType: name of the scope type
     :return: list of scope variables, modified it and init
     :rtype: (variable dictionnary, modifier dictionnary, iterator, int,
-             title type dictionnary, character stats)
+             title type dictionnary, character stats, flag dictionnary,
+             artifact stats)
     """
     var = list()
     mod = list()
+    flag = list()
     titTyp = list()
-    charStats = list()
+    charSt = list()
+    artSt = list()
     i = init
     isProvince = (scopeType == provinceScope)
     isCharacter = (scopeType == charScope)
+    isArt = (scopeType == artScope)
 
     deep = 2 # deep 0 = root, 1 = provinces
     isVariable = False # Is currently parsing a variable bloc
     isTitle = False # Is currently parsing a title bloc
-    oneChar = None # Stats of oe character
+    isFlag = False # Is currently parsing a flag bloc
+    oneChar = None # Stats of one character
+    oneArt = None # Stats of one artifact
     while (deep > 1) & (i < n):
         i += 1
         line = unspaced(next(it))
@@ -90,6 +106,7 @@ def parseScope(it, init, n, scopeType):
             deep -= 1
             isVariable = False
             isTitle = False
+            isFlag = False
         tokens = line.split('=')
         if len(tokens) == 2:
             if deep == 2 :
@@ -97,10 +114,17 @@ def parseScope(it, init, n, scopeType):
                 if isCharacter :
                     # Save previous character
                     if oneChar != None:
-                        charStats.append(oneChar)
+                        charSt.append(oneChar)
                     # Prepare to store the next one
                     oneChar = dict.fromkeys(list({scopeType}))
                     oneChar[scopeType] = scope
+                if isArt :
+                    # Save previous artifact
+                    if oneArt != None:
+                        artSt.append(oneArt)
+                    # Prepare to store the next one
+                    oneArt = dict.fromkeys(list({scopeType}))
+                    oneArt[scopeType] = scope
             
             # Variable parsing
             if isVariable:
@@ -112,6 +136,12 @@ def parseScope(it, init, n, scopeType):
             # Modifiers parsing
             if (tokens[0] == modifierToken) & (tokens[1] != '') & goodScopeModifier(deep, scopeType) :
                 mod.append({scopeType:scope, "modifier":tokens[1]})
+                
+            # Flag parsing
+            if isFlag:
+                flag.append({scopeType:scope, "flag":tokens[0], "date":tokens[1]})
+            if (tokens[0] == flagToken) & (tokens[1] == ''):
+                isFlag = True
             
             # Title parsing
             if isProvince & (deep == 3) & (tokens[0].startswith("b_")) :
@@ -124,7 +154,11 @@ def parseScope(it, init, n, scopeType):
             # Character parsing
             if isCharacter & (tokens[0] in extractedCharStats):
                 oneChar[charStatLib[tokens[0]]] = tokens[1]
-    return (var, mod, it, i, titTyp, charStats)
+                
+            # Artifact parsing
+            if isArt & (tokens[0] in extractedArtStats):
+                oneArt[tokens[0]] = tokens[1]
+    return (var, mod, it, i, titTyp, charSt, flag, artSt)
 
 #%%
 
@@ -132,39 +166,50 @@ def parse(lines):
     """
     Parse the lines of a CK2 savegame file
     
-    :return: (provVar, provMod, titleVar, titTyp, charStats)
+    :return: (provVar, provMod, provFlag, titleVar, titleFlag, titTyp,
+              charStats, charFlag, artFlag, artStats)
     """
     characterFound = False
     provinceFound = False
     titleFound = False
+    artifactFound = False
     n = len(lines)
     i = 0
     it = iter(lines)
-    while (not titleFound) & (i < n):
+    while (not artifactFound) & (i < n):
         i += 1
         line = next(it)
         
-        if characterKey in line:
+        if (characterKey in line) & (not characterFound):
            characterFound = True 
            while ((not '{' in line) & (i < n)):
                 i += 1
                 line = next(it)
-           (charVar, charMod, it, i, empty, charStats) = parseScope(it, i, n, charScope)
+           (charVar, charMod, it, i, empty, charStats, charFlag, empty) = parseScope(it, i, n, charScope)
         
-        if characterFound & (provinceKey in line):
+        if characterFound & (provinceKey in line) & (not provinceFound):
             provinceFound = True
             while ((not '{' in line) & (i < n)):
                 i += 1
                 line = next(it)
-            (provVar, provMod, it, i, titTyp, empty) = parseScope(it, i, n, provinceScope)
+            (provVar, provMod, it, i, titTyp, empty, provFlag, empty) = parseScope(it, i, n, provinceScope)
             
-        if provinceFound & (titleKey in line):
+        if provinceFound & (titleKey in line) & (not titleFound):
             titleFound = True
             while ((not '{' in line) & (i < n)):
                 i += 1
                 line = next(it)
-            (titleVar, titleMod, it, i, empty, empty) = parseScope(it, i, n, titleScope)
-    return (provVar, provMod, titleVar, titTyp, charStats)
+            (titleVar, titleMod, it, i, empty, empty, titleFlag, empty) = parseScope(it, i, n, titleScope)
+        
+        if titleFound & (artifactKey in line) & (not artifactFound):
+            artifactFound = True
+            while ((not '{' in line) & (i < n)):
+                i += 1
+                line = next(it)
+            (empty, empty, it, i, empty, empty, artFlag, artStats) = parseScope(it, i, n, artScope)
+            
+    return (provVar, provMod, provFlag, titleVar, titleFlag, titTyp, charStats,
+            charFlag, artFlag, artStats)
 
 #%%
 
@@ -207,8 +252,13 @@ print("{} files to parse".format(len(filesToParse)))
 
 dfProvVar = pd.DataFrame()
 dfProvMod = pd.DataFrame()
+dfProvFlag = pd.DataFrame()
 dfTitleVar = pd.DataFrame()
+dfTitleFlag = pd.DataFrame()
 dfCharStats = pd.DataFrame()
+dfCharFlag = pd.DataFrame()
+dfArtStats = pd.DataFrame()
+dfArtFlag = pd.DataFrame()
 for fileName in filesToParse:
     # Get the year
     year = getYearFromFileName(fileName)
@@ -221,13 +271,19 @@ for fileName in filesToParse:
     readFile.close()
     
     # Parse
-    (provVar, provMod, titleVar, titleTyp, charStats) = parse(lines)
+    (provVar, provMod, provFlag, titleVar, titleFlag, titleTyp,
+     charStats, charFlag, artFlag, artStats) = parse(lines)
     
     # Data consolidation
     dfProvVar = createOrConcatDataFrame(provVar, dfProvVar, year)
     dfProvMod = createOrConcatDataFrame(provMod, dfProvMod, year)
+    dfProvFlag = createOrConcatDataFrame(provFlag, dfProvFlag, year)
     dfTitleVar = createOrConcatDataFrame(titleVar, dfTitleVar, year)
+    dfTitleFlag = createOrConcatDataFrame(titleFlag, dfTitleFlag, year)
     dfCharStats = createOrConcatDataFrame(charStats, dfCharStats, year)
+    dfCharFlag = createOrConcatDataFrame(charFlag, dfCharFlag, year)
+    dfArtStats = createOrConcatDataFrame(artStats, dfArtStats, year)
+    dfArtFlag = createOrConcatDataFrame(artFlag, dfArtFlag, year)
     
     
     # We only need the last values because it does not change
@@ -240,16 +296,26 @@ for fileName in filesToParse:
 #%%
     
 # Column ordering
-dfProvMod = dfProvMod[["province", "modifier", "year"]]
+dfProvMod = dfProvMod[[provinceScope, "modifier", "year"]]
+dfProvFlag = dfProvFlag[[provinceScope, "flag", "date", "year"]]
+dfTitleFlag = dfTitleFlag[[titleScope, "flag", "date", "year"]]
+dfCharFlag = dfCharFlag[[charScope, "flag", "date", "year"]]
+dfArtFlag = dfArtFlag[[artScope, "flag", "date", "year"]]
+artColumnOrder.insert(0, artScope)
+dfArtStats = dfArtStats[artColumnOrder]
         
 #%%
 
-# TODO : add the save name to the file
-# TODO : update the fileq instead of create them
-dfProvVar.to_csv(targetDir + savePrefix + "_ProvinceVariables.csv", index=False)
-dfProvMod.to_csv(targetDir + savePrefix + "_ProvinceModifiers.csv", index=False)
-dfTitleVar.to_csv(targetDir + savePrefix + "_TitleVariables.csv", index=False)
-dfTitleTyp.to_csv(targetDir + savePrefix + "_TitleTypes.csv", index=False)
-dfCharStats.to_csv(targetDir + savePrefix + "_CharacterStats.csv", index=False,
+# TODO : update the files instead of create them
+dfProvVar.to_csv(targetDir + savePrefix + "ProvinceVariables.csv", index=False)
+dfProvMod.to_csv(targetDir + savePrefix + "ProvinceModifiers.csv", index=False)
+dfProvFlag.to_csv(targetDir + savePrefix + "ProvinceFlags.csv", index=False)
+dfTitleVar.to_csv(targetDir + savePrefix + "TitleVariables.csv", index=False)
+dfTitleFlag.to_csv(targetDir + savePrefix + "TitleFlags.csv", index=False)
+dfTitleTyp.to_csv(targetDir + savePrefix + "TitleTypes.csv", index=False)
+dfCharStats.to_csv(targetDir + savePrefix + "CharacterStats.csv", index=False,
                    encoding='utf-8')
+dfCharFlag.to_csv(targetDir + savePrefix + "CharacterFlags.csv", index=False)
+dfArtStats.to_csv(targetDir + savePrefix + "ArtifactStats.csv", index=False)
+dfArtFlag.to_csv(targetDir + savePrefix + "ArtifactFlags.csv", index=False)
 

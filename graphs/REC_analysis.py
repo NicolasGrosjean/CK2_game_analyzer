@@ -13,11 +13,11 @@ matplotlib.style.use('ggplot')
 #%%
 
 dataDir = "../save_parser/results/"
-imageDir = "./images/"
+imageDir = "../graphs/images/"
 
 #%%
 
-savePrefix = "save_test"
+savePrefix = "save_test_"
 
 #%%
 
@@ -45,7 +45,10 @@ ofYear = 1097
 
 #%%
 
-dfTitleVar = pd.read_csv(dataDir + savePrefix + "_TitleVariables.csv")
+dfTitleVar = pd.read_csv(dataDir + savePrefix + "TitleVariables.csv")
+dfChar = pd.read_csv(dataDir + savePrefix + "CharacterStats.csv")
+dfArtFlag = pd.read_csv(dataDir + savePrefix + "ArtifactFlags.csv")
+dfArtStats = pd.read_csv(dataDir + savePrefix + "ArtifactStats.csv")
 
 #%%
 
@@ -60,8 +63,16 @@ print(cathedral["title"].unique())
 
 #TODO : Analyze the cathedral province modifiers
 
+#TODO : Analyze the relic disparition
+
 #%%
 
+################## ANALYZE INCOMES OF RELIC OWNERS ############################
+dfArt = pd.merge(dfArtFlag, dfArtStats, on="artifact")
+
+#%%
+
+############## ANALYZE THE CATHEDRAL BUILDING EVOLUTION #######################
 cathedralByYear = pd.DataFrame()
 for year in cathedral["year"].unique():
     cathedralByYear = pd.concat([cathedralByYear, cathedral.loc[cathedral["year"] == year, ["title","value"]].set_index("title").rename(columns={'value':year})], axis=1)
@@ -76,4 +87,4 @@ cathedralByYear.transpose().plot(ax=ax, fontsize=20, lw=2)
 for i in range(len(steps)):
     ax.axhline(steps[i], color="black", linestyle='--')
 plt.legend(loc=2, fontsize = 'x-large')
-plt.savefig(imageDir + "Cathedral.png", dpi=dpi)
+plt.savefig(imageDir + savePrefix + "Cathedral.png", dpi=dpi)
