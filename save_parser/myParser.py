@@ -48,6 +48,7 @@ provinceScope = "province"
 titleScope = "title"
 charScope = "character"
 artScope = "artifact"
+artColumnOrder.insert(0, artScope)
 
 #%%
 def unspaced(string):
@@ -259,6 +260,7 @@ print("{} files to parse".format(len(filesToParse)))
 #%%
 
 firstFileSaving = True
+dfArtFlag = pd.DataFrame()
 for fileName in filesToParse:
     # Get the year
     year = getYearFromFileName(fileName)
@@ -291,13 +293,14 @@ for fileName in filesToParse:
     dfCharFlag["year"] = year
     dfArtStats = pd.DataFrame(artStats)
     dfArtStats["year"] = year
+    
+    dfArtFlag = pd.concat[dfArtFlag, pd.DataFrame(artFlag)].drop_duplicates()
      
     # Column ordering
     dfProvMod = dfProvMod[[provinceScope, "modifier", "year"]]
     dfProvFlag = dfProvFlag[[provinceScope, "flag", "date", "year"]]
     dfTitleFlag = dfTitleFlag[[titleScope, "flag", "date", "year"]]
     dfCharFlag = dfCharFlag[[charScope, "flag", "date", "year"]]
-    artColumnOrder.insert(0, artScope)
     dfArtStats = dfArtStats[artColumnOrder]
     
     saveData(dfProvVar, year, targetDir + savePrefix + "ProvinceVariables.csv",
@@ -322,12 +325,11 @@ for fileName in filesToParse:
     
 #%%
 
-# We only need the last values because they don't change
-
-dfArtFlag = pd.DataFrame(artFlag)
+# We only updated year by year
 dfArtFlag = dfArtFlag[[artScope, "flag", "date"]]
 dfArtFlag.to_csv(targetDir + savePrefix + "ArtifactFlags.csv", index=False)
 
+# We only need the last values because they don't change
 # In fact some tribal titles can become castle, city or temple
 # We can do better by indicating the changing year
 dfTitleTyp = pd.DataFrame(titleTyp)
