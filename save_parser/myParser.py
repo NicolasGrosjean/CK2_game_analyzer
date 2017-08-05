@@ -240,6 +240,13 @@ def createOrConcatDataFrame(dictionnary, df, year):
     else:
         df = pd.concat([df, dfYear], axis=0)
     return df
+    
+#%%
+def saveData(df, year, fileName, firstFileSaving=True):
+    if (firstFileSaving):
+        df.to_csv(fileName, index=False, encoding='utf-8')
+    else:
+        df.to_csv(fileName, mode='a', header=None, index=False, encoding='utf-8')
 
 #%%
 
@@ -251,15 +258,7 @@ print("{} files to parse".format(len(filesToParse)))
 
 #%%
 
-dfProvVar = pd.DataFrame()
-dfProvMod = pd.DataFrame()
-dfProvFlag = pd.DataFrame()
-dfTitleVar = pd.DataFrame()
-dfTitleFlag = pd.DataFrame()
-dfCharStats = pd.DataFrame()
-dfCharFlag = pd.DataFrame()
-dfArtStats = pd.DataFrame()
-dfArtFlag = pd.DataFrame()
+firstFileSaving = True
 for fileName in filesToParse:
     # Get the year
     year = getYearFromFileName(fileName)
@@ -274,48 +273,63 @@ for fileName in filesToParse:
     # Parse
     (provVar, provMod, provFlag, titleVar, titleFlag, titleTyp,
      charStats, charFlag, artFlag, artStats) = parse(lines)
-    
+     
     # Data consolidation
-    dfProvVar = createOrConcatDataFrame(provVar, dfProvVar, year)
-    dfProvMod = createOrConcatDataFrame(provMod, dfProvMod, year)
-    dfProvFlag = createOrConcatDataFrame(provFlag, dfProvFlag, year)
-    dfTitleVar = createOrConcatDataFrame(titleVar, dfTitleVar, year)
-    dfTitleFlag = createOrConcatDataFrame(titleFlag, dfTitleFlag, year)
-    dfCharStats = createOrConcatDataFrame(charStats, dfCharStats, year)
-    dfCharFlag = createOrConcatDataFrame(charFlag, dfCharFlag, year)
-    dfArtStats = createOrConcatDataFrame(artStats, dfArtStats, year)   
+    dfProvVar = pd.DataFrame(provVar)
+    dfProvVar["year"] = year
+    dfProvMod = pd.DataFrame(provMod)
+    dfProvMod["year"] = year
+    dfProvFlag = pd.DataFrame(provFlag)
+    dfProvFlag["year"] = year
+    dfTitleVar = pd.DataFrame(titleVar)
+    dfTitleVar["year"] = year
+    dfTitleFlag = pd.DataFrame(titleFlag)
+    dfTitleFlag["year"] = year
+    dfCharStats = pd.DataFrame(charStats)
+    dfCharStats["year"] = year
+    dfCharFlag = pd.DataFrame(charFlag)
+    dfCharFlag["year"] = year
+    dfArtStats = pd.DataFrame(artStats)
+    dfArtStats["year"] = year
+     
+    # Column ordering
+    dfProvMod = dfProvMod[[provinceScope, "modifier", "year"]]
+    dfProvFlag = dfProvFlag[[provinceScope, "flag", "date", "year"]]
+    dfTitleFlag = dfTitleFlag[[titleScope, "flag", "date", "year"]]
+    dfCharFlag = dfCharFlag[[charScope, "flag", "date", "year"]]
+    artColumnOrder.insert(0, artScope)
+    dfArtStats = dfArtStats[artColumnOrder]
     
-    # We only need the last values because it does not change
-    dfArtFlag = pd.DataFrame(artFlag)
-    # In fact some tribal titles can become castle, city or temple
-    # We can do better by indicating the changing year
-    dfTitleTyp = pd.DataFrame(titleTyp)
-  
-    print("Year {} treated!".format(year))
+    saveData(dfProvVar, year, targetDir + savePrefix + "ProvinceVariables.csv",
+             firstFileSaving)
+    saveData(dfProvMod, year, targetDir + savePrefix + "ProvinceModifiers.csv",
+             firstFileSaving)
+    saveData(dfProvFlag, year, targetDir + savePrefix + "ProvinceFlags.csv",
+             firstFileSaving)
+    saveData(dfTitleVar, year, targetDir + savePrefix + "TitleVariables.csv",
+             firstFileSaving)
+    saveData(dfTitleFlag, year, targetDir + savePrefix + "TitleFlags.csv",
+             firstFileSaving)
+    saveData(dfCharStats, year, targetDir + savePrefix + "CharacterStats.csv",
+             firstFileSaving)
+    saveData(dfCharFlag, year, targetDir + savePrefix + "CharacterFlags.csv",
+             firstFileSaving)
+    saveData(dfArtStats, year, targetDir + savePrefix + "ArtifactStats.csv",
+             firstFileSaving)
+    firstFileSaving = False
     
-#%%
+    print("Year {} treated!".format(year))    
     
-# Column ordering
-dfProvMod = dfProvMod[[provinceScope, "modifier", "year"]]
-dfProvFlag = dfProvFlag[[provinceScope, "flag", "date", "year"]]
-dfTitleFlag = dfTitleFlag[[titleScope, "flag", "date", "year"]]
-dfCharFlag = dfCharFlag[[charScope, "flag", "date", "year"]]
-dfArtFlag = dfArtFlag[[artScope, "flag", "date"]]
-artColumnOrder.insert(0, artScope)
-dfArtStats = dfArtStats[artColumnOrder]
-        
 #%%
 
-# TODO : update the files instead of create them
-dfProvVar.to_csv(targetDir + savePrefix + "ProvinceVariables.csv", index=False)
-dfProvMod.to_csv(targetDir + savePrefix + "ProvinceModifiers.csv", index=False)
-dfProvFlag.to_csv(targetDir + savePrefix + "ProvinceFlags.csv", index=False)
-dfTitleVar.to_csv(targetDir + savePrefix + "TitleVariables.csv", index=False)
-dfTitleFlag.to_csv(targetDir + savePrefix + "TitleFlags.csv", index=False)
-dfTitleTyp.to_csv(targetDir + savePrefix + "TitleTypes.csv", index=False)
-dfCharStats.to_csv(targetDir + savePrefix + "CharacterStats.csv", index=False,
-                   encoding='utf-8')
-dfCharFlag.to_csv(targetDir + savePrefix + "CharacterFlags.csv", index=False)
-dfArtStats.to_csv(targetDir + savePrefix + "ArtifactStats.csv", index=False)
+# We only need the last values because they don't change
+
+dfArtFlag = pd.DataFrame(artFlag)
+dfArtFlag = dfArtFlag[[artScope, "flag", "date"]]
 dfArtFlag.to_csv(targetDir + savePrefix + "ArtifactFlags.csv", index=False)
+
+# In fact some tribal titles can become castle, city or temple
+# We can do better by indicating the changing year
+dfTitleTyp = pd.DataFrame(titleTyp)
+dfTitleTyp.to_csv(targetDir + savePrefix + "TitleTypes.csv", index=False)   
 
