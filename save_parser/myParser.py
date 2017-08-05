@@ -4,10 +4,11 @@ Created on June 2017
 
 @author: Nicolas
 """
-#(provVar, provMod, provFlag, titleVar, titleFlag, titleTyp, charStats, charFlag, artFlag, artStats) = parse(lines)
+
 import os
 import io
 import pandas as pd
+import time
 
 #%%  
 
@@ -251,6 +252,15 @@ def saveData(df, year, fileName, firstFileSaving=True):
 
 #%%
 
+def computeExecutionTime(startTime):
+    execTime = time.time() - startTime
+    execTimeHour = int(execTime/3600)
+    execTimeMin = int((execTime - execTimeHour*3600)/60)
+    execTimeSec = int((execTime - execTimeHour*3600 - execTimeMin*60)*100)/100
+    print('---- Done in {h} hours {m} minutes {s} seconds ---'.format(h=execTimeHour, m=execTimeMin, s=execTimeSec))
+
+#%%
+
 filesToParse = []
 for fileName in os.listdir(saveDir):
     if fileName.startswith(savePrefix):
@@ -258,6 +268,8 @@ for fileName in os.listdir(saveDir):
 print("{} files to parse".format(len(filesToParse)))
 
 #%%
+
+startTime = time.time() 
 
 firstFileSaving = True
 dfArtFlag = pd.DataFrame()
@@ -321,7 +333,9 @@ for fileName in filesToParse:
              firstFileSaving)
     firstFileSaving = False
     
-    print("Year {} treated!".format(year))    
+    print("Year {} treated!".format(year))
+    
+computeExecutionTime(startTime)
     
 #%%
 
