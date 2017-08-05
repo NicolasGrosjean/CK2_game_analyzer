@@ -31,7 +31,8 @@ charStatLib = {"b_d" : "Birth date", "d_d" : "Death date", "prs" :"Prestige",
                
 extractedArtStats = list({"type", "owner", "org_owner", "obtained", "equipped",
                           "active"})
-artColumnOrder = ["type", "owner", "org_owner", "obtained", "equipped", "active"]
+artColumnOrder = ["type", "owner", "org_owner", "obtained", "equipped",
+                  "active", "year"]
 
 #%%
 provinceKey = "provinces="
@@ -282,11 +283,10 @@ for fileName in filesToParse:
     dfTitleFlag = createOrConcatDataFrame(titleFlag, dfTitleFlag, year)
     dfCharStats = createOrConcatDataFrame(charStats, dfCharStats, year)
     dfCharFlag = createOrConcatDataFrame(charFlag, dfCharFlag, year)
-    dfArtStats = createOrConcatDataFrame(artStats, dfArtStats, year)
-    dfArtFlag = createOrConcatDataFrame(artFlag, dfArtFlag, year)
-    
+    dfArtStats = createOrConcatDataFrame(artStats, dfArtStats, year)   
     
     # We only need the last values because it does not change
+    dfArtFlag = pd.DataFrame(artFlag)
     # In fact some tribal titles can become castle, city or temple
     # We can do better by indicating the changing year
     dfTitleTyp = pd.DataFrame(titleTyp)
@@ -300,7 +300,7 @@ dfProvMod = dfProvMod[[provinceScope, "modifier", "year"]]
 dfProvFlag = dfProvFlag[[provinceScope, "flag", "date", "year"]]
 dfTitleFlag = dfTitleFlag[[titleScope, "flag", "date", "year"]]
 dfCharFlag = dfCharFlag[[charScope, "flag", "date", "year"]]
-dfArtFlag = dfArtFlag[[artScope, "flag", "date", "year"]]
+dfArtFlag = dfArtFlag[[artScope, "flag", "date"]]
 artColumnOrder.insert(0, artScope)
 dfArtStats = dfArtStats[artColumnOrder]
         
