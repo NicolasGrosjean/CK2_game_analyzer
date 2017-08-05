@@ -33,6 +33,9 @@ dpi = 100
 # Cathedral points for each steps
 steps = [100, 600, 2600, 3100, 5600, 6800,
          8300, 9800, 10300, 10800, 11300, 12000]
+         
+# Minimal yearly income to build cathedral
+cathedralIncome = 100
 
 #%%
 
@@ -68,14 +71,42 @@ print(cathedral["title"].unique())
 #%%
 
 ################## ANALYZE INCOMES OF RELIC OWNERS ############################
-dfArt = pd.merge(dfArtFlag, dfArtStats, on="artifact")
+dfRelics = pd.merge(dfArtFlag[dfArtFlag["flag"]=="relique"], dfArtStats, on="artifact")
+dfRelicAndIncome = pd.merge(dfRelics,
+                            dfChar[["character", "Estimated year income", "year"]],
+left_on=["owner", "year"], right_on=["character", "year"])
+print("{0} unique relics".format(dfRelicAndIncome.type.unique().size))
+
+#%%
+
+relicsByType = pd.DataFrame()
+for artType in dfRelicAndIncome["type"].unique():
+    relicsByType = pd.concat([relicsByType,
+                             dfRelicAndIncome.loc[dfRelicAndIncome["type"] == artType,
+                                                  ["year","Estimated year income"]]
+                                                  .set_index("year")
+                                                  .rename(columns={"Estimated year income":artType})], axis=1)
+
+#%%
+
+fig, ax = plt.subplots(nrows=1, ncols=1, figsize=(width, height), dpi=dpi)
+ax.set_title(u"Income of relic owners (Opus Francigenum {0})".format(ofYear),
+             fontsize=20)
+relicsByType.plot(ax=ax, fontsize=20, lw=2)
+ax.axhline(cathedralIncome, color="black", linestyle='--')
+plt.legend(loc=2, fontsize = 'x-large')
+plt.savefig(imageDir + savePrefix + "RelicOwnerIncome.png", dpi=dpi)
 
 #%%
 
 ############## ANALYZE THE CATHEDRAL BUILDING EVOLUTION #######################
 cathedralByYear = pd.DataFrame()
 for year in cathedral["year"].unique():
-    cathedralByYear = pd.concat([cathedralByYear, cathedral.loc[cathedral["year"] == year, ["title","value"]].set_index("title").rename(columns={'value':year})], axis=1)
+    cathedralByYear = pd.concat([cathedralByYear,
+                                 cathedral.loc[cathedral["year"] == year,
+                                               ["title","value"]]
+                                               .set_index("title")
+                                               .rename(columns={'value':year})], axis=1)
     
 
 #%%
