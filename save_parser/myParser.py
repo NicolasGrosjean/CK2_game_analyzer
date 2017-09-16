@@ -306,7 +306,7 @@ for fileName in filesToParse:
     dfArtStats = pd.DataFrame(artStats)
     dfArtStats["year"] = year
     
-    dfArtFlag = pd.concat[dfArtFlag, pd.DataFrame(artFlag)].drop_duplicates()
+    dfArtFlag = pd.concat([dfArtFlag, pd.DataFrame(artFlag)]).drop_duplicates()
      
     # Column ordering
     dfProvMod = dfProvMod[[provinceScope, "modifier", "year"]]
