@@ -137,3 +137,10 @@ ax.set_title(u"Yearly Cathedral evolution (Opus Francigenum {0})".format(ofYear)
 cathedralDeltaByYear.transpose().plot(ax=ax, fontsize=20, lw=2)
 plt.legend(loc=2, fontsize = 'x-large')
 plt.savefig(imageDir + savePrefix + "CathedralIncreasing.png", dpi=dpi)
+
+#%%
+print("Mean of yearly evolution")
+print(cathedralDeltaByYear.transpose().mean())
+
+print("\nEstimation of the number of year to complete the cathedral")
+print(12000/cathedralDeltaByYear.transpose().mean())
