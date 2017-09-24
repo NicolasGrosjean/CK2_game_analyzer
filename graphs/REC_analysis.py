@@ -119,3 +119,21 @@ for i in range(len(steps)):
     ax.axhline(steps[i], color="black", linestyle='--')
 plt.legend(loc=2, fontsize = 'x-large')
 plt.savefig(imageDir + savePrefix + "Cathedral.png", dpi=dpi)
+
+#%%
+
+# Delta computation
+cathedralDeltaByYear = cathedralByYear[cathedralByYear.columns[1:]].copy()
+for iCol in range(1, cathedralByYear.columns.size):
+    prevYear = cathedralByYear.columns[iCol - 1]
+    year = cathedralByYear.columns[iCol]
+    cathedralDeltaByYear[year] = (cathedralByYear[year] - cathedralByYear[prevYear]) / (year - prevYear)
+    
+#%%
+
+fig, ax = plt.subplots(nrows=1, ncols=1, figsize=(width, height), dpi=dpi)
+ax.set_title(u"Yearly Cathedral evolution (Opus Francigenum {0})".format(ofYear),
+             fontsize=20)
+cathedralDeltaByYear.transpose().plot(ax=ax, fontsize=20, lw=2)
+plt.legend(loc=2, fontsize = 'x-large')
+plt.savefig(imageDir + savePrefix + "CathedralIncreasing.png", dpi=dpi)
