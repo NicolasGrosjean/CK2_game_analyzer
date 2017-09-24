@@ -22,11 +22,11 @@ savePrefix = "save_test_"
 #%%
 
 # Image resolution
-width = 16
-height = 9
+width = 19.2
+height = 10.8
 
 # Multiplication of previous ones by dpi to have pixel resolution
-dpi = 100 
+dpi = 100
 
 #%%
 
