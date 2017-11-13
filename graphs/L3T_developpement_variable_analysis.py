@@ -36,12 +36,25 @@ citySteps   = [100, 150, 250, 400, 500]
 templeSteps = [100, 170, 220, 260, 300]
 
 #%%
+# Detail variables
+det = ["developpement_init", "developpement_yearly_growth", "developpement_spec",
+       "developpement_road", "developpement_trade_post", "developpement_cathedral"]
+# I have removed looting because it is negative
+
+#%%
 
 dfTitleVar = pd.read_csv(dataDir + savePrefix + "TitleVariables.csv")
 
 #%%
 
 dev = dfTitleVar[dfTitleVar["variable"] == "developpement"]
+
+#%%
+
+# Detail for the holdings which exist at start
+holdingsAtStart = dfTitleVar.loc[dfTitleVar["year"] == min(dfTitleVar["year"]), "title"].unique()
+devDetail = dfTitleVar[dfTitleVar["variable"].isin(det) &
+                       dfTitleVar["title"].isin(holdingsAtStart)]
 
 #%%
 print("Number of titles by year")
@@ -82,6 +95,20 @@ def createStatDataFrame(df):
     devStats = pd.concat([mini, quantiles, maxi], axis=0)
     return devStats
 
+
+#%%
+
+def createDetailStatDataFrame(df):
+    """
+    Create a statistic dataframe containing the mean for each developement source
+    from a dataframe with "year", "title"
+    """
+    devByYear = pd.DataFrame()
+    for year in df["year"].unique():
+        dev1Year = pd.pivot_table(devDetail.loc[devDetail["year"] == year, ["title","value", "variable"]], values="value", index="title", columns="variable").fillna(0).mean()
+        devByYear = pd.concat([devByYear, pd.DataFrame(dev1Year, columns=[year])], axis=1)
+    return devByYear
+
 #%%
 
 ##################### GLOBAL DEVELOPMENT STATS ################################
@@ -96,6 +123,18 @@ ax.set_title(u"Development evolution ({0} - {1})".format(minYear,
 devStats.transpose().plot(ax=ax, fontsize=20, lw=2)
 plt.legend(loc=2, fontsize = 'x-large')
 plt.savefig(imageDir + savePrefix + "Developpement.png", dpi=dpi)
+
+#%%
+
+devStatsDetail = createDetailStatDataFrame(devDetail)
+
+#%%
+
+fig, ax = plt.subplots(nrows=1, ncols=1, figsize=(width, height), dpi=dpi)
+ax.set_title(u"Mean development evolution by holdings existing in {0}".format(minYear), fontsize=20)
+devStatsDetail.transpose().plot.area(ax=ax, fontsize=20, lw=2)
+plt.legend(loc=2, fontsize = 'x-large')
+plt.savefig(imageDir + savePrefix + "DeveloppementByType.png", dpi=dpi)
 
 #%%
 
@@ -147,3 +186,8 @@ for i in range(len(templeSteps)):
     ax.axhline(templeSteps[i], color="black", linestyle='--')
 plt.legend(loc=2, fontsize = 'x-large')
 plt.savefig(imageDir + savePrefix + "Temple_developpement.png", dpi=dpi)
+
+#%%
+################# DEVELOPMENT DETAIL ON SOME HOLDINGS #########################
+
+# TODO
