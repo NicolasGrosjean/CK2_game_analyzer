@@ -44,6 +44,7 @@ artifactKey = "artifacts="
 
 modifierToken = "modifier"
 flagToken = "flags"
+traitToken = "traits"
 
 provinceScope = "province"
 titleScope = "title"
@@ -81,7 +82,7 @@ def parseScope(it, init, n, scopeType):
     :return: list of scope variables, modified it and init
     :rtype: (variable dictionnary, modifier dictionnary, iterator, int,
              title type dictionnary, character stats, flag dictionnary,
-             artifact stats)
+             artifact stat, traits dictionnary)
     """
     var = list()
     mod = list()
@@ -89,6 +90,7 @@ def parseScope(it, init, n, scopeType):
     titTyp = list()
     charSt = list()
     artSt = list()
+    traits = list()
     i = init
     isProvince = (scopeType == provinceScope)
     isCharacter = (scopeType == charScope)
@@ -102,7 +104,8 @@ def parseScope(it, init, n, scopeType):
     oneArt = None # Stats of one artifact
     while (deep > 1) & (i < n):
         i += 1
-        line = unspaced(next(it))
+        spacedLine = next(it)
+        line = unspaced(spacedLine)
         if '{' in line:
             deep += 1
         if '}' in line:
@@ -158,10 +161,17 @@ def parseScope(it, init, n, scopeType):
             if isCharacter & (tokens[0] in extractedCharStats):
                 oneChar[charStatLib[tokens[0]]] = tokens[1]
                 
+            # Trait parsing
+            if isCharacter & (tokens[0] == traitToken):
+                oneCharTraits = spacedLine.split('=')[1].replace('{', '').replace('}', '').split(' ')
+                for trait in oneCharTraits:
+                    if trait != '\n':
+                        traits.append({scopeType:scope, "trait":trait})
+                
             # Artifact parsing
             if isArt & (tokens[0] in extractedArtStats):
                 oneArt[tokens[0]] = tokens[1]
-    return (var, mod, it, i, titTyp, charSt, flag, artSt)
+    return (var, mod, it, i, titTyp, charSt, flag, artSt, traits)
 
 #%%
 
@@ -170,7 +180,7 @@ def parse(lines):
     Parse the lines of a CK2 savegame file
     
     :return: (provVar, provMod, provFlag, titleVar, titleFlag, titTyp,
-              charStats, charFlag, artFlag, artStats)
+              charStats, charFlag, artFlag, artStats, traits)
     """
     characterFound = False
     provinceFound = False
@@ -188,31 +198,31 @@ def parse(lines):
            while ((not '{' in line) & (i < n)):
                 i += 1
                 line = next(it)
-           (charVar, charMod, it, i, empty, charStats, charFlag, empty) = parseScope(it, i, n, charScope)
+           (charVar, charMod, it, i, empty, charStats, charFlag, empty, traits) = parseScope(it, i, n, charScope)
         
         if characterFound & (provinceKey in line) & (not provinceFound):
             provinceFound = True
             while ((not '{' in line) & (i < n)):
                 i += 1
                 line = next(it)
-            (provVar, provMod, it, i, titTyp, empty, provFlag, empty) = parseScope(it, i, n, provinceScope)
+            (provVar, provMod, it, i, titTyp, empty, provFlag, empty, empty) = parseScope(it, i, n, provinceScope)
             
         if provinceFound & (titleKey in line) & (not titleFound):
             titleFound = True
             while ((not '{' in line) & (i < n)):
                 i += 1
                 line = next(it)
-            (titleVar, titleMod, it, i, empty, empty, titleFlag, empty) = parseScope(it, i, n, titleScope)
+            (titleVar, titleMod, it, i, empty, empty, titleFlag, empty, empty) = parseScope(it, i, n, titleScope)
         
         if titleFound & (artifactKey in line) & (not artifactFound):
             artifactFound = True
             while ((not '{' in line) & (i < n)):
                 i += 1
                 line = next(it)
-            (empty, empty, it, i, empty, empty, artFlag, artStats) = parseScope(it, i, n, artScope)
+            (empty, empty, it, i, empty, empty, artFlag, artStats, empty) = parseScope(it, i, n, artScope)
             
     return (provVar, provMod, provFlag, titleVar, titleFlag, titTyp, charStats,
-            charFlag, artFlag, artStats)
+            charFlag, artFlag, artStats, traits)
 
 #%%
 
@@ -286,7 +296,7 @@ for fileName in filesToParse:
     
     # Parse
     (provVar, provMod, provFlag, titleVar, titleFlag, titleTyp,
-     charStats, charFlag, artFlag, artStats) = parse(lines)
+     charStats, charFlag, artFlag, artStats, traits) = parse(lines)
      
     # Data consolidation
     dfProvVar = pd.DataFrame(provVar)
@@ -305,6 +315,8 @@ for fileName in filesToParse:
     dfCharFlag["year"] = year
     dfArtStats = pd.DataFrame(artStats)
     dfArtStats["year"] = year
+    dfTraits = pd.DataFrame(traits)
+    dfTraits["year"] = year   
     
     dfArtFlag = pd.concat([dfArtFlag, pd.DataFrame(artFlag)]).drop_duplicates()
      
@@ -314,6 +326,7 @@ for fileName in filesToParse:
     dfTitleFlag = dfTitleFlag[[titleScope, "flag", "date", "year"]]
     dfCharFlag = dfCharFlag[[charScope, "flag", "date", "year"]]
     dfArtStats = dfArtStats[artColumnOrder]
+    dfTraits = dfTraits[[charScope, "trait", "year"]]
     
     saveData(dfProvVar, year, targetDir + savePrefix + "ProvinceVariables.csv",
              firstFileSaving)
@@ -330,6 +343,8 @@ for fileName in filesToParse:
     saveData(dfCharFlag, year, targetDir + savePrefix + "CharacterFlags.csv",
              firstFileSaving)
     saveData(dfArtStats, year, targetDir + savePrefix + "ArtifactStats.csv",
+             firstFileSaving)
+    saveData(dfTraits, year, targetDir + savePrefix + "Traits.csv",
              firstFileSaving)
     firstFileSaving = False
     
