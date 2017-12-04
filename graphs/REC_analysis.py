@@ -5,6 +5,7 @@ Created on July 2017
 @author: Nicolas
 """
 
+import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 import matplotlib
@@ -144,3 +145,73 @@ print(cathedralDeltaByYear.transpose().mean())
 
 print("\nEstimation of the number of year to complete the cathedral")
 print(12000/cathedralDeltaByYear.transpose().mean())
+
+#%%
+
+######################## ANALYZE THE ARTISTS ##################################
+dfTraits = pd.read_csv(dataDir + savePrefix + "Traits.csv")
+
+#%%
+
+artists = dfTraits[(dfTraits['trait'] >= 329) & (dfTraits['trait'] <= 338)]
+
+#%%
+
+sculptor = artists[(artists['trait'] >= 329) & (artists['trait'] <= 331)]
+painter = artists[(artists['trait'] >= 332) & (artists['trait'] <= 335)]
+glassMaker = artists[(artists['trait'] >= 336) & (artists['trait'] <= 338)]
+
+#%%
+
+artistsByType = pd.DataFrame()
+artistsByType['year'] = np.arange(min(artists['year']), max(artists['year']))
+
+#%%
+artistsByType = pd.merge(artistsByType,
+         pd.DataFrame(sculptor.groupby('year').count().character)
+         .reset_index(), on='year', how='left')
+artistsByType = pd.merge(artistsByType,
+         pd.DataFrame(painter.groupby('year').count().character)
+         .reset_index(), on='year', how='left')
+artistsByType = pd.merge(artistsByType,
+         pd.DataFrame(glassMaker.groupby('year').count().character)
+         .reset_index(), on='year', how='left')
+artistsByType.columns = ['year', 'sculptor', 'painter', 'glassMaker']
+artistsByType.set_index('year', inplace=True)
+
+
+#%%
+
+fig, ax = plt.subplots(nrows=1, ncols=1, figsize=(width, height), dpi=dpi)
+ax.set_title(u"Artists", fontsize=20)
+artistsByType.plot(ax=ax, fontsize=20, lw=2)
+plt.legend(loc=2, fontsize = 'x-large')
+plt.savefig(imageDir + savePrefix + "ArtistsByType.png", dpi=dpi)
+
+#%%
+
+apprentices = artists[artists['trait'].isin([329, 332, 336])]
+apprenticesByType = pd.DataFrame()
+apprenticesByType['year'] = np.arange(min(apprentices['year']), max(apprentices['year']))
+
+#%%
+
+apprenticesByType = pd.merge(apprenticesByType,
+         pd.DataFrame(apprentices[apprentices['trait'] == 329].groupby('year')
+         .count().character).reset_index(), on='year', how='left')
+apprenticesByType = pd.merge(apprenticesByType,
+         pd.DataFrame(apprentices[apprentices['trait'] == 332].groupby('year')
+         .count().character).reset_index(), on='year', how='left')
+apprenticesByType = pd.merge(apprenticesByType,
+         pd.DataFrame(apprentices[apprentices['trait'] == 336].groupby('year')
+         .count().character).reset_index(), on='year', how='left')
+apprenticesByType.columns = ['year', 'sculptor', 'painter', 'glassMaker']
+apprenticesByType.set_index('year', inplace=True)
+
+#%%
+
+fig, ax = plt.subplots(nrows=1, ncols=1, figsize=(width, height), dpi=dpi)
+ax.set_title(u"Apprentices", fontsize=20)
+apprenticesByType.plot(ax=ax, fontsize=20, lw=2)
+plt.legend(loc=2, fontsize = 'x-large')
+plt.savefig(imageDir + savePrefix + "ApprenticesByType.png", dpi=dpi)
