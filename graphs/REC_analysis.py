@@ -153,12 +153,37 @@ dfTraits = pd.read_csv(dataDir + savePrefix + "Traits.csv")
 
 #%%
 
-artists = dfTraits[(dfTraits['trait'] >= 329) & (dfTraits['trait'] <= 338)]
+# date format = nan or 1110.7.23
+def extractYear(date):
+    if pd.isnull(date):
+        return np.nan
+    return date.split('.')[0]
+
+#%%
+    
+#Filter on living character
+
+# Get a dataframe with the death year for each character
+dfChar["Death year"] = dfChar["Death date"].apply(extractYear)
+dfCharDeath = dfChar[["character", "Death year"]].drop_duplicates()
+dfCharDeath2 = dfCharDeath.groupby(['character']).max()
+dfCharDeath2 = dfCharDeath2.reset_index()
+
+# Filter traits with it
+dfTraits = pd.merge(dfTraits, dfCharDeath2, on='character', how='left')
+dfTraits['Death year'] = pd.to_numeric(dfTraits['Death year'])
+# nan comparision is always false so we need to oppose the expression
+dfTraits = dfTraits[~(dfTraits['year'] > dfTraits['Death year'])]
+
 
 #%%
 
-sculptor = artists[(artists['trait'] >= 329) & (artists['trait'] <= 331)]
-painter = artists[(artists['trait'] >= 332) & (artists['trait'] <= 335)]
+artists = dfTraits[(dfTraits['trait'] >= 330) & (dfTraits['trait'] <= 338)]
+
+#%%
+
+sculptor = artists[(artists['trait'] >= 330) & (artists['trait'] <= 332)]
+painter = artists[(artists['trait'] >= 333) & (artists['trait'] <= 335)]
 glassMaker = artists[(artists['trait'] >= 336) & (artists['trait'] <= 338)]
 
 #%%
@@ -184,13 +209,13 @@ artistsByType.set_index('year', inplace=True)
 
 fig, ax = plt.subplots(nrows=1, ncols=1, figsize=(width, height), dpi=dpi)
 ax.set_title(u"Artists", fontsize=20)
-artistsByType.plot(ax=ax, fontsize=20, lw=2)
+artistsByType.fillna(0).plot(ax=ax, fontsize=20, lw=2)
 plt.legend(loc=2, fontsize = 'x-large')
 plt.savefig(imageDir + savePrefix + "ArtistsByType.png", dpi=dpi)
 
 #%%
 
-apprentices = artists[artists['trait'].isin([329, 332, 336])]
+apprentices = artists[artists['trait'].isin([330, 333, 336])]
 apprenticesByType = pd.DataFrame()
 apprenticesByType['year'] = np.arange(min(apprentices['year']), max(apprentices['year']))
 
@@ -212,6 +237,6 @@ apprenticesByType.set_index('year', inplace=True)
 
 fig, ax = plt.subplots(nrows=1, ncols=1, figsize=(width, height), dpi=dpi)
 ax.set_title(u"Apprentices", fontsize=20)
-apprenticesByType.plot(ax=ax, fontsize=20, lw=2)
+apprenticesByType.fillna(0).plot(ax=ax, fontsize=20, lw=2)
 plt.legend(loc=2, fontsize = 'x-large')
 plt.savefig(imageDir + savePrefix + "ApprenticesByType.png", dpi=dpi)
