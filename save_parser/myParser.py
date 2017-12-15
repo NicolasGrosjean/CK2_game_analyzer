@@ -180,7 +180,7 @@ def parse(lines):
     Parse the lines of a CK2 savegame file
     
     :return: (provVar, provMod, provFlag, titleVar, titleFlag, titTyp,
-              charStats, charFlag, artFlag, artStats, traits)
+              charStats, charMod, charFlag, artFlag, artStats, traits)
     """
     characterFound = False
     provinceFound = False
@@ -222,7 +222,7 @@ def parse(lines):
             (empty, empty, it, i, empty, empty, artFlag, artStats, empty) = parseScope(it, i, n, artScope)
             
     return (provVar, provMod, provFlag, titleVar, titleFlag, titTyp, charStats,
-            charFlag, artFlag, artStats, traits)
+            charMod, charFlag, artFlag, artStats, traits)
 
 #%%
 
@@ -296,7 +296,7 @@ for fileName in filesToParse:
     
     # Parse
     (provVar, provMod, provFlag, titleVar, titleFlag, titleTyp,
-     charStats, charFlag, artFlag, artStats, traits) = parse(lines)
+     charStats, charMod, charFlag, artFlag, artStats, traits) = parse(lines)
      
     # Data consolidation
     dfProvVar = pd.DataFrame(provVar)
@@ -311,6 +311,8 @@ for fileName in filesToParse:
     dfTitleFlag["year"] = year
     dfCharStats = pd.DataFrame(charStats)
     dfCharStats["year"] = year
+    dfCharMod = pd.DataFrame(charMod)
+    dfCharMod["year"] = year
     dfCharFlag = pd.DataFrame(charFlag)
     dfCharFlag["year"] = year
     dfArtStats = pd.DataFrame(artStats)
@@ -324,6 +326,7 @@ for fileName in filesToParse:
     dfProvMod = dfProvMod[[provinceScope, "modifier", "year"]]
     dfProvFlag = dfProvFlag[[provinceScope, "flag", "date", "year"]]
     dfTitleFlag = dfTitleFlag[[titleScope, "flag", "date", "year"]]
+    dfCharMod = dfCharMod[[charScope, "modifier", "year"]]
     dfCharFlag = dfCharFlag[[charScope, "flag", "date", "year"]]
     dfArtStats = dfArtStats[artColumnOrder]
     dfTraits = dfTraits[[charScope, "trait", "year"]]
@@ -339,6 +342,8 @@ for fileName in filesToParse:
     saveData(dfTitleFlag, year, targetDir + savePrefix + "TitleFlags.csv",
              firstFileSaving)
     saveData(dfCharStats, year, targetDir + savePrefix + "CharacterStats.csv",
+             firstFileSaving)
+    saveData(dfCharMod, year, targetDir + savePrefix + "CharacterModifiers.csv",
              firstFileSaving)
     saveData(dfCharFlag, year, targetDir + savePrefix + "CharacterFlags.csv",
              firstFileSaving)
